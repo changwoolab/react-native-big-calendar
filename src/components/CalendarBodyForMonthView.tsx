@@ -204,7 +204,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     weeks.forEach((week) => {
       week.forEach((date) => {
         const d = targetDate.date(date)
-        result.set(getDateKey(d), makeSortedEvents(d))
+        result.set(getSortedEventKey(d), makeSortedEvents(d))
       })
     })
 
@@ -309,7 +309,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
                 {date &&
-                  sortedEvents.get(getDateKey(date))?.reduce(
+                  sortedEvents.get(getSortedEventKey(date))?.reduce(
                     (elements, event, index, events) => [
                       ...elements,
                       index > maxVisibleEventCount ? null : index === maxVisibleEventCount ? (
@@ -410,6 +410,6 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
   )
 }
 
-function getDateKey(date: dayjs.Dayjs) {
+function getSortedEventKey(date: dayjs.Dayjs) {
   return date.toISOString()
 }
