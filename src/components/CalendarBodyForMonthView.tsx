@@ -79,9 +79,13 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   const [calendarWidth, setCalendarWidth] = React.useState<number>(0)
   const [calendarCellHeight, setCalendarCellHeight] = React.useState<number>(0)
 
-  const weeks = showAdjacentMonths
-    ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
-    : calendarize(targetDate.toDate(), weekStartsOn)
+  const weeks = React.useMemo(
+    () =>
+      showAdjacentMonths
+        ? getWeeksWithAdjacentMonths(targetDate, weekStartsOn)
+        : calendarize(targetDate.toDate(), weekStartsOn),
+    [showAdjacentMonths, targetDate, weekStartsOn],
+  )
 
   const minCellHeight = containerHeight / 5 - 30
   const theme = useTheme()
@@ -99,7 +103,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     [calendarCellTextStyle],
   )
 
-  const sortedEvents = React.useCallback(
+  const makeSortedEvents = React.useCallback(
     (day: dayjs.Dayjs) => {
       if (!sortedMonthView) {
         return events.filter(({ start, end }) =>
@@ -193,6 +197,19 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     },
     [events, sortedMonthView],
   )
+
+  const sortedEvents = React.useMemo(() => {
+    const result = new Map<string, ReturnType<typeof makeSortedEvents>>()
+
+    weeks.forEach((week) => {
+      week.forEach((date) => {
+        const d = targetDate.date(date)
+        result.set(getDateKey(d), makeSortedEvents(d))
+      })
+    })
+
+    return result
+  }, [makeSortedEvents, targetDate, weeks])
 
   const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
     if (date && renderCustomDateForMonth) {
@@ -292,7 +309,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
                 {date &&
-                  sortedEvents(date).reduce(
+                  sortedEvents.get(getDateKey(date))?.reduce(
                     (elements, event, index, events) => [
                       ...elements,
                       index > maxVisibleEventCount ? null : index === maxVisibleEventCount ? (
@@ -391,4 +408,8 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
       />
     </TouchableHighlight>
   )
+}
+
+function getDateKey(date: dayjs.Dayjs) {
+  return date.toISOString()
 }

@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react'
 import dayjs from 'dayjs'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Alert, Text, TouchableOpacity, View } from 'react-native'
 
 import { Calendar, EventRenderer } from '../src'
@@ -281,6 +281,25 @@ storiesOf('showcase - Mobile', module)
           disableMonthEventCellPress={true}
           onPressCell={(_date) => {
             alert(`You can only press Date Cell. Not Event Cell ${_date.getDay()}`)
+          }}
+        />
+      </View>
+    )
+  })
+  .add('Month - So many events', () => {
+    const manyEvents = Array.from({ length: 1000 }).map(
+      (val, index) => events[index % events.length],
+    )
+    return (
+      <View style={styles.mobile}>
+        <Calendar
+          height={MOBILE_HEIGHT}
+          events={manyEvents}
+          mode={'month'}
+          disableMonthEventCellPress={true}
+          sortedMonthView={false}
+          onPressCell={(_date) => {
+            alert(`hangs`)
           }}
         />
       </View>
