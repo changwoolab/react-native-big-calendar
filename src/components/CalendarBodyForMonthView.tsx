@@ -200,16 +200,42 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
   const sortedEvents = React.useMemo(() => {
     const result = new Map<string, ReturnType<typeof makeSortedEvents>>()
+    const startSorting = new Date()
 
-    weeks.forEach((week) => {
-      week.forEach((date) => {
-        const d = targetDate.date(date)
-        result.set(getSortedEventKey(d), makeSortedEvents(d))
+    if (!sortedMonthView) {
+      events.forEach((event) => {
+        const startTime = dayjs(event.start).startOf('day')
+        const endTime = dayjs(event.end).endOf('day')
+
+        let time = startTime
+        while (time.isBefore(endTime)) {
+          const eventKey = getSortedEventKey(time)
+          const getResult = result.get(eventKey)
+
+          if (!getResult) result.set(eventKey, [event])
+          else result.set(eventKey, [...getResult, event])
+
+          time = time.add(1, 'day')
+        }
       })
-    })
+    } else {
+      weeks.forEach((week) => {
+        week.forEach((date) => {
+          const d = targetDate.date(date)
+          result.set(getSortedEventKey(d), makeSortedEvents(d))
+        })
+      })
+    }
 
+    console.log('%c---------------------------', 'color:red')
+    console.log('result:>>', result)
+    console.log('%c---------------------------', 'color:red')
+
+    console.log('%c---------------------------', 'color:red')
+    console.log(startSorting.getTime() - new Date().getTime())
+    console.log('%c---------------------------', 'color:red')
     return result
-  }, [makeSortedEvents, targetDate, weeks])
+  }, [events, makeSortedEvents, sortedMonthView, targetDate, weeks])
 
   const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
     if (date && renderCustomDateForMonth) {
@@ -411,5 +437,5 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
 }
 
 function getSortedEventKey(date: dayjs.Dayjs) {
-  return date.toISOString()
+  return date.startOf('day').toISOString()
 }
