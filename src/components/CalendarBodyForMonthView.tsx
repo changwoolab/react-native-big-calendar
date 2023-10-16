@@ -158,11 +158,12 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
             ({ start, end }) => dayjs(end).endOf('day').isAfter(min) && dayjs(start).isBefore(max),
           )
           .reverse()
+
         /**
          * We move eligible event to the top
          * For example, when rendering for 03/01, Event 3 should be moved to the top, since there is a gap left by Event 1
          */
-        let finalEvents: T[] = []
+        const finalEvents: T[] = []
         let tmpDay: dayjs.Dayjs = day.startOf('week')
         //re-sort events from the start of week until the calendar cell date
         //optimize sorting of event nodes and make sure that no empty gaps are left on top of calendar cell
@@ -200,7 +201,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
   const sortedEvents = React.useMemo(() => {
     const result = new Map<string, ReturnType<typeof makeSortedEvents>>()
-    const startSorting = new Date()
 
     if (!sortedMonthView) {
       events.forEach((event) => {
@@ -227,13 +227,10 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       })
     }
 
-    console.log('%c---------------------------', 'color:red')
-    console.log('result:>>', result)
-    console.log('%c---------------------------', 'color:red')
+    // console.log('%c---------------------------', 'color:red')
+    // console.log('result:>>', result)
+    // console.log('%c---------------------------', 'color:red')
 
-    console.log('%c---------------------------', 'color:red')
-    console.log(startSorting.getTime() - new Date().getTime())
-    console.log('%c---------------------------', 'color:red')
     return result
   }, [events, makeSortedEvents, sortedMonthView, targetDate, weeks])
 
@@ -335,41 +332,41 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
                 {date &&
-                  sortedEvents.get(getSortedEventKey(date))?.reduce(
-                    (elements, event, index, events) => [
-                      ...elements,
-                      index > maxVisibleEventCount ? null : index === maxVisibleEventCount ? (
-                        <Text
-                          key={index}
-                          style={[
-                            theme.typography.moreLabel,
-                            { marginTop: 2, color: theme.palette.moreLabel },
-                          ]}
-                          onPress={() => onPressMoreLabel?.(events, date.toDate())}
-                        >
-                          {moreLabel.replace(
-                            '{moreCount}',
-                            `${events.length - maxVisibleEventCount}`,
-                          )}
-                        </Text>
-                      ) : (
-                        <CalendarEventForMonthView
-                          key={index}
-                          event={event}
-                          eventCellStyle={eventCellStyle}
-                          onPressEvent={onPressEvent}
-                          renderEvent={renderEvent}
-                          date={date}
-                          dayOfTheWeek={ii}
-                          calendarWidth={calendarWidth}
-                          isRTL={theme.isRTL}
-                          eventMinHeightForMonthView={eventMinHeightForMonthView}
-                          showAdjacentMonths={showAdjacentMonths}
-                        />
-                      ),
-                    ],
-                    [] as (null | JSX.Element)[],
-                  )}
+                  sortedEvents
+                    .get(getSortedEventKey(date))
+                    ?.reduce((elements, event, index, events) => {
+                      return [
+                        ...elements,
+                        index > maxVisibleEventCount ? null : index === maxVisibleEventCount ? (
+                          <Text
+                            key={index}
+                            style={[
+                              theme.typography.moreLabel,
+                              { marginTop: 2, color: theme.palette.moreLabel },
+                            ]}
+                            onPress={() => onPressMoreLabel?.(events, date.toDate())}
+                          >
+                            {moreLabel
+                              .replace('{moreCount}', `${events.length - maxVisibleEventCount}`)
+                              .replace('{count}', `${events.length}`)}
+                          </Text>
+                        ) : (
+                          <CalendarEventForMonthView
+                            key={index}
+                            event={event}
+                            eventCellStyle={eventCellStyle}
+                            onPressEvent={onPressEvent}
+                            renderEvent={renderEvent}
+                            date={date}
+                            dayOfTheWeek={ii}
+                            calendarWidth={calendarWidth}
+                            isRTL={theme.isRTL}
+                            eventMinHeightForMonthView={eventMinHeightForMonthView}
+                            showAdjacentMonths={showAdjacentMonths}
+                          />
+                        ),
+                      ]
+                    }, [] as (null | JSX.Element)[])}
                 {disableMonthEventCellPress && (
                   <>
                     <TouchableGradually
