@@ -71,7 +71,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   eventMinHeightForMonthView,
   moreLabel,
   onPressMoreLabel,
-  sortedMonthView,
   renderCustomDateForMonth,
   disableMonthEventCellPress,
 }: CalendarBodyForMonthViewProps<T>) {
@@ -103,136 +102,27 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     [calendarCellTextStyle],
   )
 
-  const makeSortedEvents = React.useCallback(
-    (day: dayjs.Dayjs) => {
-      if (!sortedMonthView) {
-        return events.filter(({ start, end }) =>
-          day.isBetween(dayjs(start).startOf('day'), dayjs(end).endOf('day'), null, '[)'),
-        )
-      } else {
-        /**
-         * Better way to sort overlapping events that spans accross multiple days
-         * For example, if you want following events
-         * Event 1, start = 01/01 12:00, end = 02/01 12:00
-         * Event 2, start = 02/01 12:00, end = 03/01 12:00
-         * Event 3, start = 03/01 12:00, end = 04/01 12:00
-         *
-         * When drawing calendar in month view, event 3 should be placed at 3rd index for 03/01, because Event 2 are placed at 2nd index for 02/01 and 03/01
-         *
-         */
-        let min = day.startOf('day'),
-          max = day.endOf('day')
-
-        //filter all events that starts from the current week until the current day, and sort them by reverse starting time
-        let filteredEvents = events
-          .filter(
-            ({ start, end }) =>
-              dayjs(end).isAfter(day.startOf('week')) && dayjs(start).isBefore(max),
-          )
-          .sort((a, b) => {
-            if (dayjs(a.start).isSame(b.start, 'day')) {
-              const aDuration = dayjs.duration(dayjs(a.end).diff(dayjs(a.start))).days()
-              const bDuration = dayjs.duration(dayjs(b.end).diff(dayjs(b.start))).days()
-              return aDuration - bDuration
-            }
-            return b.start.getTime() - a.start.getTime()
-          })
-
-        /**
-         * find the most relevant min date to filter the events
-         * in the example:
-         * 1. when rendering for 01/01, min date will be 01/01 (start of day for event 1)
-         * 2. when rendering for 02/01, min date will be 01/01 (start of day for event 1)
-         * 3. when rendering for 03/01, min date will be 01/01 (start of day for event 1)
-         * 4. when rendering for 04/01, min date will be 01/01 (start of day for event 1)
-         * 5. when rendering for 05/01, min date will be 05/01 (no event overlaps with 05/01)
-         */
-        filteredEvents.forEach(({ start, end }) => {
-          if (dayjs(end).isAfter(min) && dayjs(start).isBefore(min)) {
-            min = dayjs(start).startOf('day')
-          }
-        })
-
-        filteredEvents = filteredEvents
-          .filter(
-            ({ start, end }) => dayjs(end).endOf('day').isAfter(min) && dayjs(start).isBefore(max),
-          )
-          .reverse()
-
-        /**
-         * We move eligible event to the top
-         * For example, when rendering for 03/01, Event 3 should be moved to the top, since there is a gap left by Event 1
-         */
-        const finalEvents: T[] = []
-        let tmpDay: dayjs.Dayjs = day.startOf('week')
-        //re-sort events from the start of week until the calendar cell date
-        //optimize sorting of event nodes and make sure that no empty gaps are left on top of calendar cell
-        while (!tmpDay.isAfter(day)) {
-          filteredEvents.forEach((event) => {
-            if (dayjs(event.end).isBefore(tmpDay.startOf('day'))) {
-              let eventToMoveUp = filteredEvents.find((e) =>
-                dayjs(e.start).startOf('day').isSame(tmpDay.startOf('day')),
-              )
-              if (eventToMoveUp != undefined) {
-                //remove eventToMoveUp from finalEvents first
-                if (finalEvents.indexOf(eventToMoveUp) > -1) {
-                  finalEvents.splice(finalEvents.indexOf(eventToMoveUp), 1)
-                }
-
-                if (finalEvents.indexOf(event) > -1) {
-                  finalEvents.splice(finalEvents.indexOf(event), 1, eventToMoveUp)
-                } else {
-                  finalEvents.push(eventToMoveUp)
-                }
-              }
-            } else if (finalEvents.indexOf(event) == -1) {
-              finalEvents.push(event)
-            }
-          })
-
-          tmpDay = tmpDay.add(1, 'day')
-        }
-
-        return finalEvents
-      }
-    },
-    [events, sortedMonthView],
-  )
-
   const sortedEvents = React.useMemo(() => {
-    const result = new Map<string, ReturnType<typeof makeSortedEvents>>()
+    const result = new Map<string, T[]>()
 
-    if (!sortedMonthView) {
-      events.forEach((event) => {
-        const startTime = dayjs(event.start).startOf('day')
-        const endTime = dayjs(event.end).endOf('day')
+    events.forEach((event) => {
+      const startTime = dayjs(event.start).startOf('day')
+      const endTime = dayjs(event.end).endOf('day')
 
-        let time = startTime
-        while (time.isBefore(endTime)) {
-          const eventKey = getSortedEventKey(time)
-          const getResult = result.get(eventKey)
+      let time = startTime
+      while (time.isBefore(endTime)) {
+        const eventKey = getSortedEventKey(time)
+        const getResult = result.get(eventKey)
 
-          if (!getResult) result.set(eventKey, [event])
-          else result.set(eventKey, [...getResult, event])
+        if (!getResult) result.set(eventKey, [event])
+        else result.set(eventKey, [...getResult, event])
 
-          time = time.add(1, 'day')
-        }
-      })
-    } else {
-      weeks.forEach((week) => {
-        week.forEach((date) => {
-          const d = targetDate.date(date)
-          result.set(getSortedEventKey(d), makeSortedEvents(d))
-        })
-      })
-    }
-
-    // console.log('%c---------------------------', 'color:red')
-    // console.log('result:>>', result)
-    // console.log('%c---------------------------', 'color:red')
+        time = time.add(1, 'day')
+      }
+    })
 
     return result
-  }, [events, makeSortedEvents, sortedMonthView, targetDate, weeks])
+  }, [events])
 
   const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
     if (date && renderCustomDateForMonth) {
