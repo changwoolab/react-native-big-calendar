@@ -103,25 +103,58 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   )
 
   const sortedEvents = React.useMemo(() => {
-    const result = new Map<string, T[]>()
+    const eventLocateMap: {
+      [date: string]: { 0: T | null; 1: T | null; 2: T | null; count: number }
+    } = {}
 
-    events.forEach((event) => {
-      const startTime = dayjs(event.start).startOf('day')
-      const endTime = dayjs(event.end).endOf('day')
+    events
+      // Sort events by the length of the event and the start time
+      .sort((a, b) => a.start.getTime() - a.end.getTime() - (b.start.getTime() - b.end.getTime()))
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      // Loop events and locate them
+      .forEach((event) => {
+        const startTime = dayjs(event.start).startOf('day')
+        const endTime = dayjs(event.end).endOf('day')
 
-      let time = startTime
-      while (time.isBefore(endTime)) {
-        const eventKey = getSortedEventKey(time)
-        const getResult = result.get(eventKey)
+        const indexToBeLocated = (() => {
+          const k = getSortedEventKey(startTime)
+          if (eventLocateMap[k]) {
+            if (!eventLocateMap[k][0]) return 0
+            else if (!eventLocateMap[k][1]) return 1
+            else if (!eventLocateMap[k][2]) return 2
+            else return 3
+          } else {
+            return 0
+          }
+        })()
 
-        if (!getResult) result.set(eventKey, [event])
-        else result.set(eventKey, [...getResult, event])
+        // 주가 바뀌면 0번째 index에 위치해야 하는데...... 흠...
 
-        time = time.add(1, 'day')
-      }
-    })
+        let time = startTime
+        while (time.isBefore(endTime)) {
+          const eventKey = getSortedEventKey(time)
 
-    return result
+          if (!eventLocateMap[eventKey]) {
+            eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
+          }
+
+          const locatedResult = eventLocateMap[eventKey]
+
+          if (indexToBeLocated !== 3 && !locatedResult[indexToBeLocated]) {
+            locatedResult[indexToBeLocated] = event
+          }
+
+          locatedResult.count += 1
+
+          time = time.add(1, 'day')
+        }
+      })
+
+    console.log('%c---------------------------', 'color:red')
+    console.log('eventLocateMap:>>', eventLocateMap)
+    console.log('%c---------------------------', 'color:red')
+
+    return eventLocateMap
   }, [events])
 
   const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
@@ -222,28 +255,60 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
                 {date &&
-                  sortedEvents
-                    .get(getSortedEventKey(date))
-                    ?.reduce((elements, event, index, events) => {
-                      return [
-                        ...elements,
-                        index > maxVisibleEventCount ? null : index === maxVisibleEventCount ? (
-                          <Text
-                            key={index}
-                            style={[
-                              theme.typography.moreLabel,
-                              { marginTop: 2, color: theme.palette.moreLabel },
-                            ]}
-                            onPress={() => onPressMoreLabel?.(events, date.toDate())}
-                          >
-                            {moreLabel
-                              .replace('{moreCount}', `${events.length - maxVisibleEventCount}`)
-                              .replace('{count}', `${events.length}`)}
-                          </Text>
-                        ) : (
+                  sortedEvents[getSortedEventKey(date)] &&
+                  [0, 1, 2, 3].reduce(
+                    (acc, curr, index) => {
+                      if (curr === 3) {
+                        return {
+                          ...acc,
+                          result: [
+                            ...acc.result,
+                            <Text
+                              key={index}
+                              style={[
+                                theme.typography.moreLabel,
+                                { marginTop: 2, color: theme.palette.moreLabel },
+                              ]}
+                              // onPress={() => onPressMoreLabel?.(events, date.toDate())}
+                            >
+                              {moreLabel
+                                .replace(
+                                  '{moreCount}',
+                                  `${sortedEvents[getSortedEventKey(date)].count}`,
+                                )
+                                .replace(
+                                  '{count}',
+                                  `${sortedEvents[getSortedEventKey(date)].count}`,
+                                )}
+                            </Text>,
+                          ],
+                        }
+                      }
+
+                      if (
+                        !sortedEvents[getSortedEventKey(date)] ||
+                        !sortedEvents[getSortedEventKey(date)][curr as keyof typeof Object.keys]
+                      ) {
+                        return {
+                          ...acc,
+                          result: [
+                            ...acc.result,
+                            <View key={index} style={{ minHeight: eventMinHeightForMonthView }} />,
+                          ],
+                        }
+                      }
+
+                      return {
+                        renderedCount: acc.renderedCount + 1,
+                        result: [
+                          ...acc.result,
                           <CalendarEventForMonthView
                             key={index}
-                            event={event}
+                            event={
+                              sortedEvents[getSortedEventKey(date)][
+                                curr as keyof typeof Object.keys
+                              ]
+                            }
                             eventCellStyle={eventCellStyle}
                             onPressEvent={onPressEvent}
                             renderEvent={renderEvent}
@@ -253,10 +318,15 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                             isRTL={theme.isRTL}
                             eventMinHeightForMonthView={eventMinHeightForMonthView}
                             showAdjacentMonths={showAdjacentMonths}
-                          />
-                        ),
-                      ]
-                    }, [] as (null | JSX.Element)[])}
+                          />,
+                        ],
+                      }
+                    },
+                    { result: [], renderedCount: 0 } as {
+                      result: (null | JSX.Element)[]
+                      renderedCount: number
+                    },
+                  ).result}
                 {disableMonthEventCellPress && (
                   <>
                     <TouchableGradually
