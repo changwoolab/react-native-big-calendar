@@ -116,7 +116,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         const startTime = dayjs(event.start).startOf('day')
         const endTime = dayjs(event.end).endOf('day')
 
-        const indexToBeLocated = (() => {
+        let indexToBeLocated: 0 | 1 | 2 | 3 = (() => {
           const k = getSortedEventKey(startTime)
           if (eventLocateMap[k]) {
             if (!eventLocateMap[k][0]) return 0
@@ -128,11 +128,18 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           }
         })()
 
-        // 주가 바뀌면 0번째 index에 위치해야 하는데...... 흠...
-
         let time = startTime
         while (time.isBefore(endTime)) {
           const eventKey = getSortedEventKey(time)
+
+          if (time.day() === 0) {
+            if (eventLocateMap[eventKey]) {
+              const newIndexToBeLocated: 0 | 1 | 2 | undefined = ([0, 1, 2] as (0 | 1 | 2)[]).find(
+                (k) => !eventLocateMap[eventKey][k as keyof (typeof eventLocateMap)[string]],
+              )
+              indexToBeLocated = newIndexToBeLocated ? newIndexToBeLocated : 3
+            }
+          }
 
           if (!eventLocateMap[eventKey]) {
             eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
@@ -149,10 +156,6 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           time = time.add(1, 'day')
         }
       })
-
-    console.log('%c---------------------------', 'color:red')
-    console.log('eventLocateMap:>>', eventLocateMap)
-    console.log('%c---------------------------', 'color:red')
 
     return eventLocateMap
   }, [events])
@@ -274,7 +277,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                               {moreLabel
                                 .replace(
                                   '{moreCount}',
-                                  `${sortedEvents[getSortedEventKey(date)].count}`,
+                                  `${
+                                    sortedEvents[getSortedEventKey(date)].count - acc.renderedCount
+                                  }`,
                                 )
                                 .replace(
                                   '{count}',
