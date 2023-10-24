@@ -342,18 +342,27 @@ storiesOf('showcase - Mobile', module)
         start: new Date(2023, 9, 1, 15, 0, 0, 0),
         end: new Date(2023, 9, 22, 10, 0, 0, 0),
       },
-      // {
-      //   id: 4,
-      //   title: `Event 4`,
-      //   start: new Date(2023, 10, 1, 15, 0, 0, 0),
-      //   end: new Date(2023, 10, 2, 10, 0, 0, 0),
-      // },
+    ]
+
+    const mock4 = [
+      {
+        id: 1,
+        title: `Event 1`,
+        start: new Date(2023, 9, 3, 15, 0, 0, 0),
+        end: new Date(2023, 9, 6, 10, 0, 0, 0),
+      },
+      {
+        id: 2,
+        title: `Event 2`,
+        start: new Date(2023, 9, 4, 15, 0, 0, 0),
+        end: new Date(2023, 10, 4, 10, 0, 0, 0),
+      },
     ]
     return (
       <View style={styles.mobile}>
         <Calendar
           height={MOBILE_HEIGHT}
-          events={mock3}
+          events={mock4}
           mode={'month'}
           disableMonthEventCellPress={false}
           sortedMonthView={false}

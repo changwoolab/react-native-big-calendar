@@ -132,19 +132,20 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         while (time.isBefore(endTime)) {
           const eventKey = getSortedEventKey(time)
 
-          // 일요일이라면, 다시 index 찾아주기
-          if (time.day() === 0) {
-            if (eventLocateMap[eventKey]) {
-              const newIndexToBeLocated: 0 | 1 | 2 | undefined = ([0, 1, 2] as (0 | 1 | 2)[]).find(
-                (k) => !eventLocateMap[eventKey][k as keyof (typeof eventLocateMap)[string]],
-              )
-              indexToBeLocated = newIndexToBeLocated ? newIndexToBeLocated : INVALID_INDEX
-            }
-          }
-
           // 아직 정의된 map이 없다면 넣어주자
           if (!eventLocateMap[eventKey]) {
             eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
+          }
+
+          // 일요일이라면, 다시 index 찾아주기
+          if (time.day() === 0) {
+            if (eventLocateMap[eventKey]) {
+              const newIndexToBeLocated: 0 | 1 | 2 | undefined = ([0, 1, 2] as const).find(
+                (k) => !eventLocateMap[eventKey][k],
+              )
+              indexToBeLocated =
+                newIndexToBeLocated !== undefined ? newIndexToBeLocated : INVALID_INDEX
+            }
           }
 
           const locatedResult = eventLocateMap[eventKey]
