@@ -68,11 +68,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   hideNowIndicator,
   showAdjacentMonths,
   renderEvent,
-  maxVisibleEventCount,
   weekStartsOn,
   eventMinHeightForMonthView,
   moreLabel,
-  onPressMoreLabel,
   renderCustomDateForMonth,
   disableMonthEventCellPress,
 }: CalendarBodyForMonthViewProps<T>) {

@@ -287,16 +287,75 @@ storiesOf('showcase - Mobile', module)
     )
   })
   .add('Month - So many events', () => {
-    const manyEvents = Array.from({ length: 1000 }).map(
-      (val, index) => events[index % events.length],
-    )
+    const mock = Array.from({ length: 1000 }).map((_, index) => {
+      return {
+        id: index + 12,
+        title: `Event ${index + 7}`,
+        start: new Date(2023, 10, (index % 27) + 1, 15, 0, 0, 0),
+        end: new Date(2023, 10, (index % 27) + 2, 10, 0, 0, 0),
+      }
+    })
+
+    const mock2 = [
+      {
+        id: 1,
+        title: `Event 1`,
+        start: new Date(2023, 10, 1, 15, 0, 0, 0),
+        end: new Date(2023, 10, 2, 10, 0, 0, 0),
+      },
+      {
+        id: 2,
+        title: `Event 2`,
+        start: new Date(2023, 10, 2, 15, 0, 0, 0),
+        end: new Date(2023, 10, 3, 10, 0, 0, 0),
+      },
+      {
+        id: 3,
+        title: `Event 3`,
+        start: new Date(2023, 10, 1, 15, 0, 0, 0),
+        end: new Date(2023, 10, 2, 10, 0, 0, 0),
+      },
+      // {
+      //   id: 4,
+      //   title: `Event 4`,
+      //   start: new Date(2023, 10, 1, 15, 0, 0, 0),
+      //   end: new Date(2023, 10, 2, 10, 0, 0, 0),
+      // },
+    ]
+
+    const mock3 = [
+      {
+        id: 1,
+        title: `Event 1`,
+        start: new Date(2023, 9, 10, 15, 0, 0, 0),
+        end: new Date(2023, 9, 13, 10, 0, 0, 0),
+      },
+      {
+        id: 2,
+        title: `Event 2`,
+        start: new Date(2023, 9, 11, 15, 0, 0, 0),
+        end: new Date(2023, 9, 23, 10, 0, 0, 0),
+      },
+      {
+        id: 3,
+        title: `Event 3`,
+        start: new Date(2023, 9, 1, 15, 0, 0, 0),
+        end: new Date(2023, 9, 22, 10, 0, 0, 0),
+      },
+      // {
+      //   id: 4,
+      //   title: `Event 4`,
+      //   start: new Date(2023, 10, 1, 15, 0, 0, 0),
+      //   end: new Date(2023, 10, 2, 10, 0, 0, 0),
+      // },
+    ]
     return (
       <View style={styles.mobile}>
         <Calendar
           height={MOBILE_HEIGHT}
-          events={manyEvents}
+          events={mock3}
           mode={'month'}
-          disableMonthEventCellPress={true}
+          disableMonthEventCellPress={false}
           sortedMonthView={false}
           onPressCell={(_date) => {
             alert(`hangs`)
