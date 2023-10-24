@@ -52,6 +52,8 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   disableMonthEventCellPress?: boolean
 }
 
+const INVALID_INDEX: -1 = -1
+
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   containerHeight,
   targetDate,
@@ -116,13 +118,13 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         const startTime = dayjs(event.start).startOf('day')
         const endTime = dayjs(event.end).endOf('day')
 
-        let indexToBeLocated: 0 | 1 | 2 | 3 = (() => {
+        let indexToBeLocated: 0 | 1 | 2 | typeof INVALID_INDEX = (() => {
           const k = getSortedEventKey(startTime)
           if (eventLocateMap[k]) {
             if (!eventLocateMap[k][0]) return 0
             else if (!eventLocateMap[k][1]) return 1
             else if (!eventLocateMap[k][2]) return 2
-            else return 3
+            else return INVALID_INDEX
           } else {
             return 0
           }
@@ -132,22 +134,25 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
         while (time.isBefore(endTime)) {
           const eventKey = getSortedEventKey(time)
 
+          // 일요일이라면, 다시 index 찾아주기
           if (time.day() === 0) {
             if (eventLocateMap[eventKey]) {
               const newIndexToBeLocated: 0 | 1 | 2 | undefined = ([0, 1, 2] as (0 | 1 | 2)[]).find(
                 (k) => !eventLocateMap[eventKey][k as keyof (typeof eventLocateMap)[string]],
               )
-              indexToBeLocated = newIndexToBeLocated ? newIndexToBeLocated : 3
+              indexToBeLocated = newIndexToBeLocated ? newIndexToBeLocated : INVALID_INDEX
             }
           }
 
+          // 아직 정의된 map이 없다면 넣어주자
           if (!eventLocateMap[eventKey]) {
             eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
           }
 
           const locatedResult = eventLocateMap[eventKey]
 
-          if (indexToBeLocated !== 3 && !locatedResult[indexToBeLocated]) {
+          // 이벤트를 해당 index에 넣어주기
+          if (indexToBeLocated !== INVALID_INDEX && !locatedResult[indexToBeLocated]) {
             locatedResult[indexToBeLocated] = event
           }
 
