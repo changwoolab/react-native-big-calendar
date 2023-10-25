@@ -24,7 +24,6 @@ import {
 } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
 import { getWeeksWithAdjacentMonths } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 import { CalendarEventForMonthView } from './CalendarEventForMonthView'
 
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
@@ -109,8 +108,20 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
     events
       // Sort events by the length of the event and the start time
-      .sort((a, b) => a.start.getTime() - a.end.getTime() - (b.start.getTime() - b.end.getTime()))
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .sort((a, b) => {
+        // Compare the start dates
+        const aStart = new Date(a.start.getFullYear(), a.start.getMonth(), a.start.getDate())
+        const bStart = new Date(b.start.getFullYear(), b.start.getMonth(), b.start.getDate())
+        const startDiff = aStart.getTime() - bStart.getTime()
+        if (startDiff !== 0) {
+          return startDiff
+        }
+
+        // Compare the durations
+        const durationB = b.end.getTime() - b.start.getTime()
+        const durationA = a.end.getTime() - a.start.getTime()
+        return durationB - durationA
+      })
       // Loop events and locate them
       .forEach((event) => {
         const startTime = dayjs(event.start).startOf('day')
@@ -358,7 +369,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarBodyForMonthView = typedMemo(_CalendarBodyForMonthView)
+export const CalendarBodyForMonthView = _CalendarBodyForMonthView
 
 function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: () => void }) {
   const backgroundColor = React.useRef(new Animated.Value(0)).current

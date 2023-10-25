@@ -6,7 +6,6 @@ import { useCalendarTouchableOpacityProps } from '../hooks/useCalendarTouchableO
 import { EventCellStyle, EventRenderer, ICalendarEventBase } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
 import { DAY_MINUTES, getRelativeTopInDay, getStyleForOverlappingEvent } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 import { DefaultCalendarEventRenderer } from './DefaultCalendarEventRenderer'
 
 const getEventCellPositionStyle = (start: Date, end: Date) => {
@@ -81,4 +80,4 @@ function _CalendarEvent<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarEvent = typedMemo(_CalendarEvent)
+export const CalendarEvent = _CalendarEvent

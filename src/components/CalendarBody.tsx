@@ -20,7 +20,6 @@ import {
   hours,
   isToday,
 } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 import { CalendarEvent } from './CalendarEvent'
 import { HourGuideCell } from './HourGuideCell'
 import { HourGuideColumn } from './HourGuideColumn'
@@ -256,4 +255,4 @@ function _CalendarBody<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarBody = typedMemo(_CalendarBody)
+export const CalendarBody = _CalendarBody

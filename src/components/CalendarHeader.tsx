@@ -7,7 +7,6 @@ import { ICalendarEventBase } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
 import { isToday } from '../utils/datetime'
 import { objHasContent, stringHasContent } from '../utils/object'
-import { typedMemo } from '../utils/react'
 
 export interface CalendarHeaderProps<T extends ICalendarEventBase> {
   dateRange: dayjs.Dayjs[]
@@ -178,4 +177,4 @@ function _CalendarHeader<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarHeader = typedMemo(_CalendarHeader)
+export const CalendarHeader = _CalendarHeader

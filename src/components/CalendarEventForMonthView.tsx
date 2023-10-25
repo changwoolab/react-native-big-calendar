@@ -7,7 +7,6 @@ import { useCalendarTouchableOpacityProps } from '../hooks/useCalendarTouchableO
 import { EventCellStyle, EventRenderer, ICalendarEventBase } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
 import { getEventSpanningInfo } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 
 interface CalendarEventProps<T extends ICalendarEventBase> {
   event: T
@@ -88,4 +87,4 @@ function _CalendarEventForMonthView<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarEventForMonthView = typedMemo(_CalendarEventForMonthView)
+export const CalendarEventForMonthView = _CalendarEventForMonthView

@@ -7,7 +7,6 @@ import { defaultTheme } from '../theme/defaultTheme'
 import { ThemeContext } from '../theme/ThemeContext'
 import { ThemeInterface } from '../theme/ThemeInterface'
 import { deepMerge } from '../utils/object'
-import { typedMemo } from '../utils/react'
 import { DeepPartial } from '../utils/utility-types'
 import { CalendarContainer, CalendarContainerProps } from './CalendarContainer'
 
@@ -35,4 +34,4 @@ function _Calendar<T extends ICalendarEventBase>({
   )
 }
 
-export const Calendar = typedMemo(_Calendar)
+export const Calendar = _Calendar

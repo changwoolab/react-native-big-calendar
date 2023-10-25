@@ -26,7 +26,6 @@ import {
   isAllDayEvent,
   modeToNum,
 } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 import { CalendarBody } from './CalendarBody'
 import { CalendarBodyForMonthView } from './CalendarBodyForMonthView'
 import { CalendarHeader } from './CalendarHeader'
@@ -317,4 +316,4 @@ function _CalendarContainer<T extends ICalendarEventBase>({
   )
 }
 
-export const CalendarContainer = typedMemo(_CalendarContainer)
+export const CalendarContainer = _CalendarContainer

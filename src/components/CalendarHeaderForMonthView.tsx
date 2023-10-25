@@ -6,7 +6,6 @@ import { u } from '../commonStyles'
 import { WeekNum } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
 import { getDatesInWeek } from '../utils/datetime'
-import { typedMemo } from '../utils/react'
 
 export interface CalendarHeaderForMonthViewProps {
   weekStartsOn: WeekNum
@@ -56,4 +55,4 @@ function _CalendarHeaderForMonthView({
   )
 }
 
-export const CalendarHeaderForMonthView = typedMemo(_CalendarHeaderForMonthView)
+export const CalendarHeaderForMonthView = _CalendarHeaderForMonthView
