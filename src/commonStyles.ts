@@ -11,11 +11,6 @@ export const eventCellCss = StyleSheet.create({
     borderRadius: 3,
     padding: 4,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-    elevation: 2,
     minWidth: '33%',
   },
 })
