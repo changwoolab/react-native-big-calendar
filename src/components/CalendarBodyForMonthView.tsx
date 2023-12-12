@@ -285,7 +285,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                               key={index}
                               style={[
                                 theme.typography.moreLabel,
-                                { marginTop: 2, color: theme.palette.moreLabel },
+                                { color: theme.palette.moreLabel },
                               ]}
                               // onPress={() => onPressMoreLabel?.(events, date.toDate())}
                             >

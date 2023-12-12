@@ -41,7 +41,7 @@ export interface ThemeInterface {
     // md: Typography
     // lg: Typography
     xl: Typography
-    moreLabel: Typography
+    moreLabel: Typography & { marginTop?: number }
   }
   eventCellOverlappings: readonly Palette[]
 }
