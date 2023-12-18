@@ -103,21 +103,36 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   )
 
   const sortedEvents = React.useMemo(() => {
+    /**
+     * 이벤트가 해당 날짜의 몇 번째에 위치할지 저장
+     * @example eventLocateMap['2021-10-01'] = { 0: event1, 1: event2, 2: event3, count: 3 } // event1은 2021-10-01의 0번째에 위치한다.
+     *
+     * 0, 1, 2 = 몇 번째 위치인가
+     * count = 총 개수
+     */
     const eventLocateMap: {
       [date: string]: { 0: T | null; 1: T | null; 2: T | null; count: number }
     } = {}
 
+    /**
+     * eventLocateMap에서 비어있는 index를 찾아 반환한다.
+     */
+    const findEventLocateIndex = (dateKey: string) => {
+      const _indexToBeLocated: CalendarLocateIndex | undefined = ([0, 1, 2] as const).find(
+        (k) => !eventLocateMap[dateKey][k],
+      )
+      return _indexToBeLocated !== undefined ? _indexToBeLocated : INVALID_INDEX
+    }
+
+    // 각 이벤트들을 돌며 해당 이벤트가 위치할 곳을 찾아 넣어준다.
     events.forEach((event) => {
       const startTime = dayjs(event.start).startOf('day')
       const endTime = dayjs(event.end).endOf('day')
 
       let indexToBeLocated: CalendarLocateIndex | typeof INVALID_INDEX = (() => {
-        const k = getSortedEventKey(startTime)
-        if (eventLocateMap[k]) {
-          if (!eventLocateMap[k][0]) return 0
-          else if (!eventLocateMap[k][1]) return 1
-          else if (!eventLocateMap[k][2]) return 2
-          else return INVALID_INDEX
+        const dateKey = getEventDateKey(startTime)
+        if (eventLocateMap[dateKey]) {
+          return findEventLocateIndex(dateKey)
         } else {
           return 0
         }
@@ -125,32 +140,25 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
       let time = startTime
       while (time.isBefore(endTime)) {
-        const eventKey = getSortedEventKey(time)
+        const dateKey = getEventDateKey(time)
 
-        // 아직 정의된 map이 없다면 넣어주자
-        if (!eventLocateMap[eventKey]) {
-          eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
+        // 해당 날짜에 eventLocateMap이 정의되어있지 않다면, 넣어주기
+        if (!eventLocateMap[dateKey]) {
+          eventLocateMap[dateKey] = { 0: null, 1: null, 2: null, count: 0 }
         }
 
-        // 일요일이라면, 다시 index 찾아주기
-        if (time.day() === 0) {
-          if (eventLocateMap[eventKey]) {
-            const newIndexToBeLocated: CalendarLocateIndex | undefined = ([0, 1, 2] as const).find(
-              (k) => !eventLocateMap[eventKey][k],
-            )
-            indexToBeLocated =
-              newIndexToBeLocated !== undefined ? newIndexToBeLocated : INVALID_INDEX
-          }
+        // 일요일이라면 다음 line으로 일정이 넘어갔다는 소리이다.
+        // 현재 line과 다음 line의 일정 배치는 다를 것이므로 다시 index를 찾아준다.
+        if (time.day() === 0 && eventLocateMap[dateKey]) {
+          indexToBeLocated = findEventLocateIndex(dateKey)
         }
-
-        const locatedResult = eventLocateMap[eventKey]
 
         // 이벤트를 해당 index에 넣어주기
-        if (indexToBeLocated !== INVALID_INDEX && !locatedResult[indexToBeLocated]) {
-          locatedResult[indexToBeLocated] = event
+        if (indexToBeLocated !== INVALID_INDEX && !eventLocateMap[dateKey][indexToBeLocated]) {
+          eventLocateMap[dateKey][indexToBeLocated] = event
         }
 
-        locatedResult.count += 1
+        eventLocateMap[dateKey].count += 1
 
         time = time.add(1, 'day')
       }
@@ -257,7 +265,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
                 {date &&
-                  sortedEvents[getSortedEventKey(date)] &&
+                  sortedEvents[getEventDateKey(date)] &&
                   [0, 1, 2, 3].reduce(
                     (acc, curr, index) => {
                       if (curr === 3) {
@@ -277,21 +285,18 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                                 .replace(
                                   '{moreCount}',
                                   `${
-                                    sortedEvents[getSortedEventKey(date)].count - acc.renderedCount
+                                    sortedEvents[getEventDateKey(date)].count - acc.renderedCount
                                   }`,
                                 )
-                                .replace(
-                                  '{count}',
-                                  `${sortedEvents[getSortedEventKey(date)].count}`,
-                                )}
+                                .replace('{count}', `${sortedEvents[getEventDateKey(date)].count}`)}
                             </Text>,
                           ],
                         }
                       }
 
                       if (
-                        !sortedEvents[getSortedEventKey(date)] ||
-                        !sortedEvents[getSortedEventKey(date)][curr as keyof typeof Object.keys]
+                        !sortedEvents[getEventDateKey(date)] ||
+                        !sortedEvents[getEventDateKey(date)][curr as keyof typeof Object.keys]
                       ) {
                         return {
                           ...acc,
@@ -309,9 +314,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                           <CalendarEventForMonthView
                             key={index}
                             event={
-                              sortedEvents[getSortedEventKey(date)][
-                                curr as keyof typeof Object.keys
-                              ]
+                              sortedEvents[getEventDateKey(date)][curr as keyof typeof Object.keys]
                             }
                             eventCellStyle={eventCellStyle}
                             onPressEvent={onPressEvent}
@@ -397,6 +400,6 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
   )
 }
 
-function getSortedEventKey(date: dayjs.Dayjs) {
+function getEventDateKey(date: dayjs.Dayjs) {
   return date.startOf('day').toISOString()
 }
