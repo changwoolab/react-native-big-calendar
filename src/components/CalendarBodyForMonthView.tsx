@@ -51,6 +51,7 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   disableMonthEventCellPress?: boolean
 }
 
+type CalendarLocateIndex = 0 | 1 | 2
 const INVALID_INDEX: -1 = -1
 
 function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
@@ -107,9 +108,8 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     } = {}
 
     events
-      // Sort events by the length of the event and the start time
       .sort((a, b) => {
-        // Compare the start dates
+        // 1. startDate가 빠른게 앞으로 가도록 정렬
         const aStart = new Date(a.start.getFullYear(), a.start.getMonth(), a.start.getDate())
         const bStart = new Date(b.start.getFullYear(), b.start.getMonth(), b.start.getDate())
         const startDiff = aStart.getTime() - bStart.getTime()
@@ -117,17 +117,16 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           return startDiff
         }
 
-        // Compare the durations
+        // 2. duration이 긴게 앞으로 가도록 정렬
         const durationB = b.end.getTime() - b.start.getTime()
         const durationA = a.end.getTime() - a.start.getTime()
         return durationB - durationA
       })
-      // Loop events and locate them
       .forEach((event) => {
         const startTime = dayjs(event.start).startOf('day')
         const endTime = dayjs(event.end).endOf('day')
 
-        let indexToBeLocated: 0 | 1 | 2 | typeof INVALID_INDEX = (() => {
+        let indexToBeLocated: CalendarLocateIndex | typeof INVALID_INDEX = (() => {
           const k = getSortedEventKey(startTime)
           if (eventLocateMap[k]) {
             if (!eventLocateMap[k][0]) return 0
@@ -151,9 +150,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           // 일요일이라면, 다시 index 찾아주기
           if (time.day() === 0) {
             if (eventLocateMap[eventKey]) {
-              const newIndexToBeLocated: 0 | 1 | 2 | undefined = ([0, 1, 2] as const).find(
-                (k) => !eventLocateMap[eventKey][k],
-              )
+              const newIndexToBeLocated: CalendarLocateIndex | undefined = (
+                [0, 1, 2] as const
+              ).find((k) => !eventLocateMap[eventKey][k])
               indexToBeLocated =
                 newIndexToBeLocated !== undefined ? newIndexToBeLocated : INVALID_INDEX
             }
