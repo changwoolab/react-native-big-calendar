@@ -107,69 +107,54 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
       [date: string]: { 0: T | null; 1: T | null; 2: T | null; count: number }
     } = {}
 
-    events
-      .sort((a, b) => {
-        // 1. startDate가 빠른게 앞으로 가도록 정렬
-        const aStart = new Date(a.start.getFullYear(), a.start.getMonth(), a.start.getDate())
-        const bStart = new Date(b.start.getFullYear(), b.start.getMonth(), b.start.getDate())
-        const startDiff = aStart.getTime() - bStart.getTime()
-        if (startDiff !== 0) {
-          return startDiff
+    events.forEach((event) => {
+      const startTime = dayjs(event.start).startOf('day')
+      const endTime = dayjs(event.end).endOf('day')
+
+      let indexToBeLocated: CalendarLocateIndex | typeof INVALID_INDEX = (() => {
+        const k = getSortedEventKey(startTime)
+        if (eventLocateMap[k]) {
+          if (!eventLocateMap[k][0]) return 0
+          else if (!eventLocateMap[k][1]) return 1
+          else if (!eventLocateMap[k][2]) return 2
+          else return INVALID_INDEX
+        } else {
+          return 0
+        }
+      })()
+
+      let time = startTime
+      while (time.isBefore(endTime)) {
+        const eventKey = getSortedEventKey(time)
+
+        // 아직 정의된 map이 없다면 넣어주자
+        if (!eventLocateMap[eventKey]) {
+          eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
         }
 
-        // 2. duration이 긴게 앞으로 가도록 정렬
-        const durationB = b.end.getTime() - b.start.getTime()
-        const durationA = a.end.getTime() - a.start.getTime()
-        return durationB - durationA
-      })
-      .forEach((event) => {
-        const startTime = dayjs(event.start).startOf('day')
-        const endTime = dayjs(event.end).endOf('day')
-
-        let indexToBeLocated: CalendarLocateIndex | typeof INVALID_INDEX = (() => {
-          const k = getSortedEventKey(startTime)
-          if (eventLocateMap[k]) {
-            if (!eventLocateMap[k][0]) return 0
-            else if (!eventLocateMap[k][1]) return 1
-            else if (!eventLocateMap[k][2]) return 2
-            else return INVALID_INDEX
-          } else {
-            return 0
+        // 일요일이라면, 다시 index 찾아주기
+        if (time.day() === 0) {
+          if (eventLocateMap[eventKey]) {
+            const newIndexToBeLocated: CalendarLocateIndex | undefined = ([0, 1, 2] as const).find(
+              (k) => !eventLocateMap[eventKey][k],
+            )
+            indexToBeLocated =
+              newIndexToBeLocated !== undefined ? newIndexToBeLocated : INVALID_INDEX
           }
-        })()
-
-        let time = startTime
-        while (time.isBefore(endTime)) {
-          const eventKey = getSortedEventKey(time)
-
-          // 아직 정의된 map이 없다면 넣어주자
-          if (!eventLocateMap[eventKey]) {
-            eventLocateMap[eventKey] = { 0: null, 1: null, 2: null, count: 0 }
-          }
-
-          // 일요일이라면, 다시 index 찾아주기
-          if (time.day() === 0) {
-            if (eventLocateMap[eventKey]) {
-              const newIndexToBeLocated: CalendarLocateIndex | undefined = (
-                [0, 1, 2] as const
-              ).find((k) => !eventLocateMap[eventKey][k])
-              indexToBeLocated =
-                newIndexToBeLocated !== undefined ? newIndexToBeLocated : INVALID_INDEX
-            }
-          }
-
-          const locatedResult = eventLocateMap[eventKey]
-
-          // 이벤트를 해당 index에 넣어주기
-          if (indexToBeLocated !== INVALID_INDEX && !locatedResult[indexToBeLocated]) {
-            locatedResult[indexToBeLocated] = event
-          }
-
-          locatedResult.count += 1
-
-          time = time.add(1, 'day')
         }
-      })
+
+        const locatedResult = eventLocateMap[eventKey]
+
+        // 이벤트를 해당 index에 넣어주기
+        if (indexToBeLocated !== INVALID_INDEX && !locatedResult[indexToBeLocated]) {
+          locatedResult[indexToBeLocated] = event
+        }
+
+        locatedResult.count += 1
+
+        time = time.add(1, 'day')
+      }
+    })
 
     return eventLocateMap
   }, [events])
