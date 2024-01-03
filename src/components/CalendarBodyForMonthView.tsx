@@ -242,10 +242,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
               showAdjacentMonths ? targetDate.date(d) : d > 0 ? targetDate.date(d) : null,
             )
             .map((date, ii) => (
-              <>
+              <React.Fragment key={`${i}-${ii}`}>
                 {date && (
                   <DayCell
-                    key={`${i}-${ii}`}
                     onPressCell={onPressCell}
                     onPressDateHeader={onPressDateHeader}
                     //@ts-expect-error
@@ -270,7 +269,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                     calendarCellHeight={calendarCellHeight}
                   />
                 )}
-              </>
+              </React.Fragment>
             ))}
         </View>
       ))}
