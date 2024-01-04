@@ -360,7 +360,7 @@ function _DayCell<T extends ICalendarEventBase>({
     | (() => ViewStyle | undefined)
   minCellHeight: number
   setCalendarCellHeight: (height: number) => void
-  currentEvent: {
+  currentEvent?: {
     0: T | null
     1: T | null
     2: T | null
@@ -489,10 +489,10 @@ const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
     // 1. currentEvent가 다른지 검사
     if (key === 'currentEvent') {
       const hasDifferentEvent =
-        prevProps.currentEvent.count !== nextProps.currentEvent.count ||
+        prevProps.currentEvent?.count !== nextProps.currentEvent?.count ||
         ([0, 1, 2] as const).some((key) => {
-          const prevEvent = prevProps.currentEvent[key]
-          const nextEvent = nextProps.currentEvent[key]
+          const prevEvent = prevProps.currentEvent?.[key]
+          const nextEvent = nextProps.currentEvent?.[key]
 
           return (
             prevEvent?.start.toISOString() !== nextEvent?.start.toISOString() ||
@@ -521,10 +521,10 @@ const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
     // 1. currentEvent가 다른지 검사
     if (key === 'currentEvent') {
       const hasDifferentEvent =
-        prevProps.currentEvent.count !== nextProps.currentEvent.count ||
+        prevProps.currentEvent?.count !== nextProps.currentEvent?.count ||
         ([0, 1, 2] as const).some((key) => {
-          const prevEvent = prevProps.currentEvent[key]
-          const nextEvent = nextProps.currentEvent[key]
+          const prevEvent = prevProps.currentEvent?.[key]
+          const nextEvent = nextProps.currentEvent?.[key]
 
           return (
             prevEvent?.start.toISOString() !== nextEvent?.start.toISOString() ||
