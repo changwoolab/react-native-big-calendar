@@ -26,7 +26,7 @@ function _Calendar<T extends ICalendarEventBase>({
   if (isRTL !== undefined) {
     theme.isRTL = isRTL
   }
-  const _theme = deepMerge(defaultTheme, theme) as ThemeInterface
+  const _theme = React.useMemo(() => deepMerge(defaultTheme, theme) as ThemeInterface, [theme])
   return (
     <ThemeContext.Provider value={_theme}>
       <CalendarContainer {...props} />
