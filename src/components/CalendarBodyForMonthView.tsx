@@ -505,13 +505,6 @@ const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
       return hasDifferentEvent
     }
 
-    // 2. date가 다른지 검사
-    if (typedKey === 'date') {
-      const diff = prevProps.date?.toISOString() !== nextProps.date?.toISOString()
-      if (diff) toDebug.push(key)
-      return diff
-    }
-
     // 나머지는 shallow comparison을 통해 검사한다.
     const isDifferent = prevProps[typedKey] !== nextProps[typedKey]
     if (isDifferent) toDebug.push(key)
@@ -523,10 +516,10 @@ const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
   console.log('%c---------------------------', 'color:red')
 
   const hasDifferentProps = Object.keys(prevProps).some((key) => {
-    const typedKey = key as keyof typeof prevProps
+    const typedKey = key as keyof typeof Object.keys
 
     // 1. currentEvent가 다른지 검사
-    if (typedKey === 'currentEvent') {
+    if (key === 'currentEvent') {
       const hasDifferentEvent =
         prevProps.currentEvent?.count !== nextProps.currentEvent?.count ||
         ([0, 1, 2] as const).some((key) => {
@@ -541,11 +534,6 @@ const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
         })
 
       return hasDifferentEvent
-    }
-
-    // 2. date가 다른지 검사
-    if (typedKey === 'date') {
-      return prevProps.date?.toISOString() !== nextProps.date?.toISOString()
     }
 
     // 나머지는 shallow comparison을 통해 검사한다.
