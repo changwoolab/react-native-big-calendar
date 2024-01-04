@@ -300,8 +300,8 @@ storiesOf('showcase - Mobile', module)
       return {
         id: index + 12,
         title: `Event ${index + 7}`,
-        start: new Date(2023, 10, (index % 27) + 1, 15, 0, 0, 0),
-        end: new Date(2023, 10, (index % 27) + 2, 10, 0, 0, 0),
+        start: new Date(2024, 0, (index % 27) + 1, 15, 0, 0, 0),
+        end: new Date(2024, 0, (index % 27) + 2, 10, 0, 0, 0),
       }
     })
 
