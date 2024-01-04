@@ -287,6 +287,15 @@ storiesOf('showcase - Mobile', module)
     )
   })
   .add('Month - So many events', () => {
+    const [a, setA] = React.useState(0)
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setA((a) => a + 1)
+      }, 1000)
+      return () => clearInterval(interval)
+    })
+
     const mock = Array.from({ length: 1000 }).map((_, index) => {
       return {
         id: index + 12,
@@ -296,73 +305,11 @@ storiesOf('showcase - Mobile', module)
       }
     })
 
-    const mock2 = [
-      {
-        id: 1,
-        title: `Event 1`,
-        start: new Date(2023, 10, 1, 15, 0, 0, 0),
-        end: new Date(2023, 10, 2, 10, 0, 0, 0),
-      },
-      {
-        id: 2,
-        title: `Event 2`,
-        start: new Date(2023, 10, 2, 15, 0, 0, 0),
-        end: new Date(2023, 10, 3, 10, 0, 0, 0),
-      },
-      {
-        id: 3,
-        title: `Event 3`,
-        start: new Date(2023, 10, 1, 15, 0, 0, 0),
-        end: new Date(2023, 10, 2, 10, 0, 0, 0),
-      },
-      // {
-      //   id: 4,
-      //   title: `Event 4`,
-      //   start: new Date(2023, 10, 1, 15, 0, 0, 0),
-      //   end: new Date(2023, 10, 2, 10, 0, 0, 0),
-      // },
-    ]
-
-    const mock3 = [
-      {
-        id: 1,
-        title: `Event 1`,
-        start: new Date(2023, 9, 10, 15, 0, 0, 0),
-        end: new Date(2023, 9, 13, 10, 0, 0, 0),
-      },
-      {
-        id: 2,
-        title: `Event 2`,
-        start: new Date(2023, 9, 11, 15, 0, 0, 0),
-        end: new Date(2023, 9, 23, 10, 0, 0, 0),
-      },
-      {
-        id: 3,
-        title: `Event 3`,
-        start: new Date(2023, 9, 1, 15, 0, 0, 0),
-        end: new Date(2023, 9, 22, 10, 0, 0, 0),
-      },
-    ]
-
-    const mock4 = [
-      {
-        id: 1,
-        title: `Event 1`,
-        start: new Date(2023, 9, 3, 15, 0, 0, 0),
-        end: new Date(2023, 9, 6, 10, 0, 0, 0),
-      },
-      {
-        id: 2,
-        title: `Event 2`,
-        start: new Date(2023, 9, 4, 15, 0, 0, 0),
-        end: new Date(2023, 10, 4, 10, 0, 0, 0),
-      },
-    ]
     return (
       <View style={styles.mobile}>
         <Calendar
           height={MOBILE_HEIGHT}
-          events={mock4}
+          events={mock}
           mode={'month'}
           disableMonthEventCellPress={false}
           sortedMonthView={false}
