@@ -167,44 +167,33 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
     return eventLocateMap
   }, [events])
 
-  const renderDateCell = React.useCallback(
-    (date: dayjs.Dayjs | null, index: number) => {
-      if (date && renderCustomDateForMonth) {
-        return renderCustomDateForMonth(date.toDate())
-      }
+  const renderDateCell = (date: dayjs.Dayjs | null, index: number) => {
+    if (date && renderCustomDateForMonth) {
+      return renderCustomDateForMonth(date.toDate())
+    }
 
-      return (
-        <Text
-          style={[
-            { textAlign: 'center' },
-            theme.typography.sm,
-            {
-              color:
-                date?.format('YYYY-MM-DD') === now.format('YYYY-MM-DD')
-                  ? theme.palette.primary.main
-                  : date?.month() !== targetDate.month()
-                  ? theme.palette.gray['500']
-                  : theme.palette.gray['800'],
-            },
-            {
-              ...getCalendarCellTextStyle(date?.toDate(), index),
-            },
-          ]}
-        >
-          {date && date.format('D')}
-        </Text>
-      )
-    },
-    [
-      getCalendarCellTextStyle,
-      now,
-      renderCustomDateForMonth,
-      targetDate,
-      theme.palette.gray,
-      theme.palette.primary.main,
-      theme.typography.sm,
-    ],
-  )
+    return (
+      <Text
+        style={[
+          { textAlign: 'center' },
+          theme.typography.sm,
+          {
+            color:
+              date?.format('YYYY-MM-DD') === now.format('YYYY-MM-DD')
+                ? theme.palette.primary.main
+                : date?.month() !== targetDate.month()
+                ? theme.palette.gray['500']
+                : theme.palette.gray['800'],
+          },
+          {
+            ...getCalendarCellTextStyle(date?.toDate(), index),
+          },
+        ]}
+      >
+        {date && date.format('D')}
+      </Text>
+    )
+  }
 
   return (
     <View
@@ -242,35 +231,124 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
               showAdjacentMonths ? targetDate.date(d) : d > 0 ? targetDate.date(d) : null,
             )
             .map((date, ii) => (
-              <>
-                {date && (
-                  <DayCell
-                    key={`${i}-${ii}`}
-                    onPressCell={onPressCell}
-                    onPressDateHeader={onPressDateHeader}
-                    //@ts-expect-error
-                    onPressEvent={onPressEvent}
-                    //@ts-expect-error
-                    eventCellStyle={eventCellStyle}
-                    showAdjacentMonths={showAdjacentMonths}
-                    //@ts-expect-error
-                    renderEvent={renderEvent}
-                    eventMinHeightForMonthView={eventMinHeightForMonthView}
-                    moreLabel={moreLabel}
-                    disableMonthEventCellPress={disableMonthEventCellPress}
-                    renderDateCell={renderDateCell}
-                    week={i}
-                    dayOfWeek={ii}
-                    date={date}
-                    getCalendarCellStyle={getCalendarCellStyle}
-                    minCellHeight={minCellHeight}
-                    setCalendarCellHeight={setCalendarCellHeight}
-                    currentEvent={sortedEvents[getEventDateKey(date)]}
-                    calendarWidth={calendarWidth}
-                    calendarCellHeight={calendarCellHeight}
-                  />
+              <TouchableOpacity
+                onPress={() => date && onPressCell && onPressCell(date.toDate())}
+                style={[
+                  i > 0 && u['border-t'],
+                  theme.isRTL && ii > 0 && u['border-r'],
+                  !theme.isRTL && ii > 0 && u['border-l'],
+                  { borderColor: theme.palette.gray['200'] },
+                  u['p-2'],
+                  u['flex-1'],
+                  u['flex-column'],
+                  {
+                    minHeight: minCellHeight,
+                  },
+                  {
+                    ...getCalendarCellStyle(date?.toDate(), i),
+                  },
+                ]}
+                key={ii}
+                onLayout={({ nativeEvent: { layout } }) =>
+                  // Only set calendarCellHeight once because they are all same
+                  i === 0 && ii === 0 && setCalendarCellHeight(layout.height)
+                }
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    date &&
+                    (onPressDateHeader
+                      ? onPressDateHeader(date.toDate())
+                      : onPressCell && onPressCell(date.toDate()))
+                  }
+                >
+                  {renderDateCell(date, i)}
+                </TouchableOpacity>
+                {date &&
+                  sortedEvents[getEventDateKey(date)] &&
+                  [0, 1, 2, 3].reduce(
+                    (acc, curr, index) => {
+                      if (curr === 3) {
+                        return {
+                          ...acc,
+                          result: [
+                            ...acc.result,
+                            <Text
+                              key={index}
+                              style={[
+                                theme.typography.moreLabel,
+                                { color: theme.palette.moreLabel },
+                              ]}
+                              // onPress={() => onPressMoreLabel?.(events, date.toDate())}
+                            >
+                              {moreLabel
+                                .replace(
+                                  '{moreCount}',
+                                  `${
+                                    sortedEvents[getEventDateKey(date)].count - acc.renderedCount
+                                  }`,
+                                )
+                                .replace('{count}', `${sortedEvents[getEventDateKey(date)].count}`)}
+                            </Text>,
+                          ],
+                        }
+                      }
+
+                      if (
+                        !sortedEvents[getEventDateKey(date)] ||
+                        !sortedEvents[getEventDateKey(date)][curr as keyof typeof Object.keys]
+                      ) {
+                        return {
+                          ...acc,
+                          result: [
+                            ...acc.result,
+                            <View key={index} style={{ minHeight: eventMinHeightForMonthView }} />,
+                          ],
+                        }
+                      }
+
+                      return {
+                        renderedCount: acc.renderedCount + 1,
+                        result: [
+                          ...acc.result,
+                          <CalendarEventForMonthView
+                            key={index}
+                            event={
+                              sortedEvents[getEventDateKey(date)][curr as keyof typeof Object.keys]
+                            }
+                            eventCellStyle={eventCellStyle}
+                            onPressEvent={onPressEvent}
+                            renderEvent={renderEvent}
+                            date={date}
+                            dayOfTheWeek={ii}
+                            calendarWidth={calendarWidth}
+                            isRTL={theme.isRTL}
+                            eventMinHeightForMonthView={eventMinHeightForMonthView}
+                            showAdjacentMonths={showAdjacentMonths}
+                          />,
+                        ],
+                      }
+                    },
+                    { result: [], renderedCount: 0 } as {
+                      result: (null | JSX.Element)[]
+                      renderedCount: number
+                    },
+                  ).result}
+                {disableMonthEventCellPress && (
+                  <>
+                    <TouchableGradually
+                      style={{
+                        height: calendarCellHeight,
+                        width: Math.floor(calendarWidth / 7),
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                      }}
+                      onPress={() => date && onPressCell && onPressCell(date.toDate())}
+                    />
+                  </>
                 )}
-              </>
+              </TouchableOpacity>
             ))}
         </View>
       ))}
@@ -321,202 +399,6 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
     </TouchableHighlight>
   )
 }
-
-function _DayCell<T extends ICalendarEventBase>({
-  onPressCell,
-  onPressDateHeader,
-  onPressEvent,
-  eventCellStyle,
-  showAdjacentMonths,
-  renderEvent,
-  eventMinHeightForMonthView,
-  moreLabel,
-  disableMonthEventCellPress,
-  renderDateCell,
-  week: i,
-  dayOfWeek: ii,
-  date,
-  getCalendarCellStyle,
-  minCellHeight,
-  setCalendarCellHeight,
-  currentEvent,
-  calendarWidth,
-  calendarCellHeight,
-}: {
-  onPressCell?: (date: Date) => void
-  onPressDateHeader?: (date: Date) => void
-  onPressEvent?: (event: T) => void
-  eventCellStyle?: EventCellStyle<T>
-  showAdjacentMonths: boolean
-  renderEvent?: EventRenderer<T>
-  eventMinHeightForMonthView: number
-  moreLabel: string
-  disableMonthEventCellPress?: boolean
-  renderDateCell: (date: dayjs.Dayjs | null, index: number) => React.ReactElement | null
-  week: number
-  dayOfWeek: number
-  date: dayjs.Dayjs | null
-  getCalendarCellStyle:
-    | ((date?: Date | undefined, hourRowIndex?: number | undefined) => ViewStyle)
-    | (() => ViewStyle | undefined)
-  minCellHeight: number
-  setCalendarCellHeight: (height: number) => void
-  currentEvent: {
-    0: T | null
-    1: T | null
-    2: T | null
-    count: number
-  }
-  calendarWidth: number
-  calendarCellHeight: number
-}) {
-  const theme = useTheme()
-
-  return (
-    <TouchableOpacity
-      onPress={() => date && onPressCell && onPressCell(date.toDate())}
-      style={[
-        i > 0 && u['border-t'],
-        theme.isRTL && ii > 0 && u['border-r'],
-        !theme.isRTL && ii > 0 && u['border-l'],
-        { borderColor: theme.palette.gray['200'] },
-        u['p-2'],
-        u['flex-1'],
-        u['flex-column'],
-        {
-          minHeight: minCellHeight,
-        },
-        {
-          ...getCalendarCellStyle(date?.toDate(), i),
-        },
-      ]}
-      key={ii}
-      onLayout={({ nativeEvent: { layout } }) =>
-        // Only set calendarCellHeight once because they are all same
-        i === 0 && ii === 0 && setCalendarCellHeight(layout.height)
-      }
-    >
-      <TouchableOpacity
-        onPress={() =>
-          date &&
-          (onPressDateHeader
-            ? onPressDateHeader(date.toDate())
-            : onPressCell && onPressCell(date.toDate()))
-        }
-      >
-        {renderDateCell(date, i)}
-      </TouchableOpacity>
-      {date &&
-        currentEvent &&
-        [0, 1, 2, 3].reduce(
-          (acc, curr, index) => {
-            if (curr === 3) {
-              return {
-                ...acc,
-                result: [
-                  ...acc.result,
-                  <Text
-                    key={index}
-                    style={[theme.typography.moreLabel, { color: theme.palette.moreLabel }]}
-                    // onPress={() => onPressMoreLabel?.(events, date.toDate())}
-                  >
-                    {moreLabel
-                      .replace('{moreCount}', `${currentEvent.count - acc.renderedCount}`)
-                      .replace('{count}', `${currentEvent.count}`)}
-                  </Text>,
-                ],
-              }
-            }
-
-            if (!currentEvent || !currentEvent[curr as keyof typeof Object.keys]) {
-              return {
-                ...acc,
-                result: [
-                  ...acc.result,
-                  <View key={index} style={{ minHeight: eventMinHeightForMonthView }} />,
-                ],
-              }
-            }
-
-            return {
-              renderedCount: acc.renderedCount + 1,
-              result: [
-                ...acc.result,
-                <CalendarEventForMonthView
-                  key={index}
-                  event={currentEvent[curr as keyof typeof Object.keys]}
-                  eventCellStyle={eventCellStyle}
-                  onPressEvent={onPressEvent}
-                  renderEvent={renderEvent}
-                  date={date}
-                  dayOfTheWeek={ii}
-                  calendarWidth={calendarWidth}
-                  isRTL={theme.isRTL}
-                  eventMinHeightForMonthView={eventMinHeightForMonthView}
-                  showAdjacentMonths={showAdjacentMonths}
-                />,
-              ],
-            }
-          },
-          { result: [], renderedCount: 0 } as {
-            result: (null | JSX.Element)[]
-            renderedCount: number
-          },
-        ).result}
-      {disableMonthEventCellPress && (
-        <>
-          <TouchableGradually
-            style={{
-              height: calendarCellHeight,
-              width: Math.floor(calendarWidth / 7),
-              position: 'absolute',
-              top: 0,
-              left: 0,
-            }}
-            onPress={() => date && onPressCell && onPressCell(date.toDate())}
-          />
-        </>
-      )}
-    </TouchableOpacity>
-  )
-}
-
-const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
-  const differentKeyNames: string[] = []
-
-  const hasDifferentProps = Object.keys(prevProps).some((key) => {
-    const isDifferent =
-      prevProps[key as keyof typeof Object.keys] !== nextProps[key as keyof typeof Object.keys]
-    if (isDifferent) differentKeyNames.push(key)
-    return isDifferent
-  })
-
-  if (
-    hasDifferentProps &&
-    differentKeyNames.length === 1 &&
-    differentKeyNames[0] === 'currentEvent'
-  ) {
-    // currentEvent가 다른지 검사
-    const hasDifferentEvent =
-      prevProps.currentEvent.count !== nextProps.currentEvent.count ||
-      ([0, 1, 2] as const).some((key) => {
-        const prevEvent = prevProps.currentEvent[key]
-        const nextEvent = nextProps.currentEvent[key]
-
-        return (
-          prevEvent?.start !== nextEvent?.start ||
-          prevEvent?.end !== nextEvent?.end ||
-          prevEvent?.title !== nextEvent?.title
-        )
-      })
-
-    if (hasDifferentEvent) {
-      return false
-    }
-  }
-
-  return !hasDifferentProps
-})
 
 function getEventDateKey(date: dayjs.Dayjs) {
   return date.startOf('day').toISOString()
