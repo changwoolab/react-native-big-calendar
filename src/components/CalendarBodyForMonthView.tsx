@@ -481,65 +481,38 @@ function _DayCell<T extends ICalendarEventBase>({
 }
 
 const DayCell = React.memo(_DayCell, (prevProps, nextProps) => {
-  const toDebug: string[] = []
-
-  Object.keys(prevProps).forEach((key) => {
-    const typedKey = key as keyof typeof Object.keys
-
-    // 1. currentEvent가 다른지 검사
-    if (key === 'currentEvent') {
-      const hasDifferentEvent =
-        prevProps.currentEvent.count !== nextProps.currentEvent.count ||
-        ([0, 1, 2] as const).some((key) => {
-          const prevEvent = prevProps.currentEvent[key]
-          const nextEvent = nextProps.currentEvent[key]
-
-          return (
-            prevEvent?.start.toISOString() !== nextEvent?.start.toISOString() ||
-            prevEvent?.end.toISOString() !== nextEvent?.end.toISOString() ||
-            prevEvent?.title !== nextEvent?.title
-          )
-        })
-
-      if (hasDifferentEvent) toDebug.push(key)
-      return hasDifferentEvent
-    }
-
-    // 나머지는 shallow comparison을 통해 검사한다.
-    const isDifferent = prevProps[typedKey] !== nextProps[typedKey]
-    if (isDifferent) toDebug.push(key)
-    return isDifferent
-  })
-
-  console.log('%c---------------------------', 'color:red')
-  console.log('toDebug:>>', toDebug)
-  console.log('%c---------------------------', 'color:red')
+  const differentKeyNames: string[] = []
 
   const hasDifferentProps = Object.keys(prevProps).some((key) => {
-    const typedKey = key as keyof typeof Object.keys
-
-    // 1. currentEvent가 다른지 검사
-    if (key === 'currentEvent') {
-      const hasDifferentEvent =
-        prevProps.currentEvent.count !== nextProps.currentEvent.count ||
-        ([0, 1, 2] as const).some((key) => {
-          const prevEvent = prevProps.currentEvent[key]
-          const nextEvent = nextProps.currentEvent[key]
-
-          return (
-            prevEvent?.start.toISOString() !== nextEvent?.start.toISOString() ||
-            prevEvent?.end.toISOString() !== nextEvent?.end.toISOString() ||
-            prevEvent?.title !== nextEvent?.title
-          )
-        })
-
-      return hasDifferentEvent
-    }
-
-    // 나머지는 shallow comparison을 통해 검사한다.
-    const isDifferent = prevProps[typedKey] !== nextProps[typedKey]
+    const isDifferent =
+      prevProps[key as keyof typeof Object.keys] !== nextProps[key as keyof typeof Object.keys]
+    if (isDifferent) differentKeyNames.push(key)
     return isDifferent
   })
+
+  if (
+    hasDifferentProps &&
+    differentKeyNames.length === 1 &&
+    differentKeyNames[0] === 'currentEvent'
+  ) {
+    // currentEvent가 다른지 검사
+    const hasDifferentEvent =
+      prevProps.currentEvent.count !== nextProps.currentEvent.count ||
+      ([0, 1, 2] as const).some((key) => {
+        const prevEvent = prevProps.currentEvent[key]
+        const nextEvent = nextProps.currentEvent[key]
+
+        return (
+          prevEvent?.start !== nextEvent?.start ||
+          prevEvent?.end !== nextEvent?.end ||
+          prevEvent?.title !== nextEvent?.title
+        )
+      })
+
+    if (hasDifferentEvent) {
+      return false
+    }
+  }
 
   return !hasDifferentProps
 })
