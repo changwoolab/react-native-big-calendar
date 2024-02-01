@@ -250,7 +250,7 @@ function _CalendarContainer<T extends ICalendarEventBase>({
           {...commonProps}
           style={bodyContainerStyle}
           containerHeight={height}
-          events={[...daytimeEvents, ...allDayEvents]}
+          events={events}
           eventCellStyle={eventCellStyle}
           calendarCellStyle={calendarCellStyle}
           calendarCellTextStyle={calendarCellTextStyle}
