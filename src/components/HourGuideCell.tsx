@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import * as React from 'react'
-import { TouchableWithoutFeedback, View } from 'react-native'
+import { AccessibilityProps, TouchableWithoutFeedback, View } from 'react-native'
 
 import { u } from '../commonStyles'
 import { CalendarCellStyle } from '../interfaces'
@@ -8,20 +8,26 @@ import { useTheme } from '../theme/ThemeContext'
 
 interface HourGuideCellProps {
   cellHeight: number
+  onLongPress: (d: dayjs.Dayjs) => void
   onPress: (d: dayjs.Dayjs) => void
   date: dayjs.Dayjs
   hour: number
   index: number
   calendarCellStyle?: CalendarCellStyle
+  calendarCellAccessibilityProps?: AccessibilityProps
+  timeslots: number
 }
 
 const _HourGuideCell = ({
   cellHeight,
+  onLongPress,
   onPress,
   date,
   hour,
   index,
   calendarCellStyle,
+  calendarCellAccessibilityProps,
+  timeslots,
 }: HourGuideCellProps) => {
   const theme = useTheme()
 
@@ -31,16 +37,37 @@ const _HourGuideCell = ({
   )
 
   return (
-    <TouchableWithoutFeedback onPress={() => onPress(date.hour(hour).minute(0))}>
+    <TouchableWithoutFeedback
+      onLongPress={() => onLongPress(date.hour(hour).minute(0))}
+      onPress={() => onPress(date.hour(hour).minute(0))}
+      {...calendarCellAccessibilityProps}
+    >
       <View
         style={[
           u['border-l'],
           u['border-b'],
-          { borderColor: theme.palette.gray['200'] },
-          { height: cellHeight },
+          {
+            borderColor: theme.palette.gray['200'],
+            height: cellHeight,
+            justifyContent: 'space-evenly',
+          },
           { ...getCalendarCellStyle(date.toDate(), index) },
         ]}
-      />
+      >
+        {Array.from({ length: timeslots }, (_, index) => (
+          <View
+            key={index}
+            style={[
+              u['border-l'],
+              u['border-b'],
+              {
+                borderColor: theme.palette.gray['100'],
+                height: 1,
+              },
+            ]}
+          />
+        ))}
+      </View>
     </TouchableWithoutFeedback>
   )
 }

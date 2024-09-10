@@ -5,9 +5,9 @@ import dayjs from 'dayjs'
 import React from 'react'
 import { Alert, Dimensions, View } from 'react-native'
 
-import { Calendar } from '../src'
+import { Calendar, ICalendarEventBase } from '../src'
 import { CONTROL_HEIGHT, Control } from './components/Control'
-import { customEventRenderer, events, spanningEvents } from './events'
+import { customEventRenderer, events, spanningEvents, customHourRenderer } from './events'
 import { useEvents } from './hooks'
 import { styles } from './styles'
 import { themes } from './themes'
@@ -181,6 +181,11 @@ storiesOf('showcase - Desktop', module)
       <Calendar height={SCREEN_HEIGHT} events={events} weekStartsOn={1} />
     </View>
   ))
+  .add('week mode - minHour and maxHour', () => (
+    <View style={styles.desktop}>
+      <Calendar height={SCREEN_HEIGHT} events={events} minHour={5} maxHour={22} />
+    </View>
+  ))
   .add('all day event', () => {
     const monday = dayjs().day(1)
     const _events = [
@@ -243,6 +248,11 @@ storiesOf('showcase - Desktop', module)
       <Calendar height={SCREEN_HEIGHT} events={events} overlapOffset={70} />
     </View>
   ))
+  .add('With timeslots', () => (
+    <View style={styles.desktop}>
+      <Calendar height={SCREEN_HEIGHT} events={events} overlapOffset={70} timeslots={1} />
+    </View>
+  ))
   .add('RTL', () => {
     React.useEffect(() => {
       require('dayjs/locale/he')
@@ -260,6 +270,16 @@ storiesOf('showcase - Desktop', module)
       </View>
     )
   })
+  .add('Custom Hour Component renderer', () => (
+    <View style={styles.desktop}>
+      <Calendar
+        height={SCREEN_HEIGHT}
+        events={events}
+        hourComponent={customHourRenderer}
+        mode={'custom'}
+      />
+    </View>
+  ))
   .add('Custom week length', () => (
     <View style={styles.desktop}>
       <Calendar
@@ -364,6 +384,55 @@ storiesOf('showcase - Desktop', module)
           height={SCREEN_HEIGHT}
           events={state.events}
           eventCellStyle={[{ backgroundColor: 'red' }, { borderWidth: 1, borderColor: 'green' }]}
+        />
+      </View>
+    )
+  })
+  .add('Schedule mode', () => {
+    const state = useEvents(events)
+    return (
+      <View style={[styles.desktop]}>
+        <Calendar
+          height={SCREEN_HEIGHT}
+          events={state.events}
+          mode="schedule"
+          eventCellStyle={(event: ICalendarEventBase & { color?: string }) => {
+            return [
+              { backgroundColor: event.color ?? 'red' },
+              { borderWidth: 1, borderColor: 'green' },
+            ]
+          }}
+        />
+      </View>
+    )
+  })
+  .add('Week mode - show week number', () => {
+    const state = useEvents(events)
+    return (
+      <View style={styles.desktop}>
+        <Calendar
+          height={SCREEN_HEIGHT}
+          events={state.events}
+          onPressEvent={(event) => alert(event.title)}
+          onPressCell={state.addEvent}
+          showWeekNumber={true}
+          weekNumberPrefix={'W'}
+        />
+      </View>
+    )
+  })
+  .add('Month mode - show week number', () => {
+    const state = useEvents(events)
+    return (
+      <View style={styles.desktop}>
+        <Calendar
+          mode="month"
+          height={SCREEN_HEIGHT}
+          events={state.events}
+          onPressEvent={(event) => alert(event.title)}
+          onPressCell={state.addEvent}
+          showWeekNumber={true}
+          weekNumberPrefix={'W'}
         />
       </View>
     )

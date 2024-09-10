@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import * as React from 'react'
-import { Text, View, ViewStyle } from 'react-native'
+import { AccessibilityProps, Text, View, ViewStyle } from 'react-native'
 
 import { u } from '../commonStyles'
 import { WeekNum } from '../interfaces'
@@ -11,12 +11,20 @@ export interface CalendarHeaderForMonthViewProps {
   weekStartsOn: WeekNum
   locale: string
   style: ViewStyle
+  showWeekNumber?: boolean
+  weekNumberPrefix?: string
+  headerContainerAccessibilityProps?: AccessibilityProps
+  headerCellAccessibilityProps?: AccessibilityProps
 }
 
 function _CalendarHeaderForMonthView({
   locale,
   weekStartsOn,
   style,
+  showWeekNumber = false,
+  weekNumberPrefix = '',
+  headerContainerAccessibilityProps = {},
+  headerCellAccessibilityProps = {},
 }: CalendarHeaderForMonthViewProps) {
   const dates = getDatesInWeek(new Date(), weekStartsOn, locale)
   const todayWeekNum = dayjs().day()
@@ -31,9 +39,34 @@ function _CalendarHeaderForMonthView({
         theme.isRTL ? u['flex-row-reverse'] : u['flex-row'],
         style,
       ]}
+      {...headerContainerAccessibilityProps}
     >
+      {showWeekNumber ? (
+        <View
+          style={[u['w-20'], { paddingTop: 2 }]}
+          key={'weekNumber'}
+          {...headerCellAccessibilityProps}
+        >
+          <View style={{ flex: 1, height: 30 }}>
+            <Text
+              style={[
+                u['text-center'],
+                {
+                  color: theme.palette.gray['800'],
+                },
+              ]}
+            >
+              {weekNumberPrefix != undefined ? weekNumberPrefix : ''}
+            </Text>
+          </View>
+        </View>
+      ) : null}
       {dates.map((date) => (
-        <View style={{ flex: 1, paddingTop: 2 }} key={date.toISOString()}>
+        <View
+          style={{ flex: 1, paddingTop: 2 }}
+          key={date.toISOString()}
+          {...headerCellAccessibilityProps}
+        >
           <View style={{ height: 30 }}>
             <Text
               style={[

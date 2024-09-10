@@ -34,6 +34,9 @@ export const u = StyleSheet.create({
   'flex-column': {
     flexDirection: 'column',
   },
+  'flex-column-reverse': {
+    flexDirection: 'column-reverse',
+  },
   'flex-1': {
     flex: 1,
   },
@@ -140,14 +143,24 @@ export const u = StyleSheet.create({
   /*
    * Width
    */
+  'w-20': {
+    width: 20,
+  },
   'w-36': {
     width: 36,
   },
   'w-50': {
     width: 50,
   },
+
+  /*
+   * Height
+   */
   'h-36': {
     height: 36,
+  },
+  'h-50': {
+    height: 50,
   },
 
   /*

@@ -2,6 +2,7 @@ import calendarize from 'calendarize'
 import dayjs from 'dayjs'
 import * as React from 'react'
 import {
+  AccessibilityProps,
   Animated,
   Platform,
   Text,
@@ -23,7 +24,7 @@ import {
   WeekNum,
 } from '../interfaces'
 import { useTheme } from '../theme/ThemeContext'
-import { getWeeksWithAdjacentMonths } from '../utils/datetime'
+import { SIMPLE_DATE_FORMAT, getWeeksWithAdjacentMonths } from '../utils/datetime'
 import { CalendarEventForMonthView } from './CalendarEventForMonthView'
 
 interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
@@ -32,10 +33,14 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   events: T[]
   style: ViewStyle
   eventCellStyle?: EventCellStyle<T>
+  eventCellAccessibilityProps?: AccessibilityProps
   calendarCellStyle?: CalendarCellStyle
+  calendarCellAccessibilityPropsForMonthView?: AccessibilityProps
+  calendarCellAccessibilityProps?: AccessibilityProps
   calendarCellTextStyle?: CalendarCellTextStyle
   hideNowIndicator?: boolean
   showAdjacentMonths: boolean
+  onLongPressCell?: (date: Date) => void
   onPressCell?: (date: Date) => void
   onPressDateHeader?: (date: Date) => void
   onPressEvent?: (event: T) => void
@@ -47,6 +52,7 @@ interface CalendarBodyForMonthViewProps<T extends ICalendarEventBase> {
   moreLabel: string
   onPressMoreLabel?: (events: T[], date: Date) => void
   sortedMonthView: boolean
+  showWeekNumber?: boolean
   renderCustomDateForMonth?: (date: Date) => React.ReactElement | null
   disableMonthEventCellPress?: boolean
 }
@@ -58,12 +64,16 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   containerHeight,
   targetDate,
   style,
+  onLongPressCell,
   onPressCell,
   onPressDateHeader,
   events,
   onPressEvent,
   eventCellStyle,
+  // eventCellAccessibilityProps = {},
   calendarCellStyle,
+  calendarCellAccessibilityPropsForMonthView = {},
+  calendarCellAccessibilityProps = {},
   calendarCellTextStyle,
   hideNowIndicator,
   showAdjacentMonths,
@@ -71,6 +81,9 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
   weekStartsOn,
   eventMinHeightForMonthView,
   moreLabel,
+  // onPressMoreLabel,
+  // sortedMonthView,
+  showWeekNumber = false,
   renderCustomDateForMonth,
   disableMonthEventCellPress,
 }: CalendarBodyForMonthViewProps<T>) {
@@ -179,7 +192,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
           theme.typography.sm,
           {
             color:
-              date?.format('YYYY-MM-DD') === now.format('YYYY-MM-DD')
+              date?.format(SIMPLE_DATE_FORMAT) === now.format(SIMPLE_DATE_FORMAT)
                 ? theme.palette.primary.main
                 : date?.month() !== targetDate.month()
                 ? theme.palette.gray['500']
@@ -226,17 +239,48 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
             },
           ]}
         >
+          {showWeekNumber ? (
+            <View
+              style={[
+                i > 0 && u['border-t'],
+                { borderColor: theme.palette.gray['200'] },
+                u['p-2'],
+                u['w-20'],
+                u['flex-column'],
+                {
+                  minHeight: minCellHeight,
+                },
+              ]}
+              key={'weekNumber'}
+              {...calendarCellAccessibilityProps}
+            >
+              <Text
+                style={[
+                  { textAlign: 'center' },
+                  theme.typography.sm,
+                  {
+                    color: theme.palette.gray['800'],
+                  },
+                ]}
+              >
+                {week.length > 0
+                  ? targetDate.date(week[0]).startOf('week').add(4, 'days').isoWeek()
+                  : ''}
+              </Text>
+            </View>
+          ) : null}
           {week
             .map((d) =>
               showAdjacentMonths ? targetDate.date(d) : d > 0 ? targetDate.date(d) : null,
             )
             .map((date, ii) => (
               <TouchableOpacity
+                onLongPress={() => date && onLongPressCell && onLongPressCell(date.toDate())}
                 onPress={() => date && onPressCell && onPressCell(date.toDate())}
                 style={[
                   i > 0 && u['border-t'],
-                  theme.isRTL && ii > 0 && u['border-r'],
-                  !theme.isRTL && ii > 0 && u['border-l'],
+                  theme.isRTL && (ii > 0 || showWeekNumber) && u['border-r'],
+                  !theme.isRTL && (ii > 0 || showWeekNumber) && u['border-l'],
                   { borderColor: theme.palette.gray['200'] },
                   u['p-2'],
                   u['flex-1'],
@@ -253,6 +297,7 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                   // Only set calendarCellHeight once because they are all same
                   i === 0 && ii === 0 && setCalendarCellHeight(layout.height)
                 }
+                {...calendarCellAccessibilityPropsForMonthView}
               >
                 <TouchableOpacity
                   onPress={() =>
@@ -261,6 +306,13 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                       ? onPressDateHeader(date.toDate())
                       : onPressCell && onPressCell(date.toDate()))
                   }
+                  onLongPress={() =>
+                    date &&
+                    (onPressDateHeader
+                      ? onPressDateHeader(date.toDate())
+                      : onLongPressCell && onLongPressCell(date.toDate()))
+                  }
+                  {...calendarCellAccessibilityProps}
                 >
                   {renderDateCell(date, i)}
                 </TouchableOpacity>
@@ -335,18 +387,19 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
                     },
                   ).result}
                 {disableMonthEventCellPress && (
-                  <>
-                    <TouchableGradually
-                      style={{
-                        height: calendarCellHeight,
-                        width: Math.floor(calendarWidth / 7),
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                      }}
-                      onPress={() => date && onPressCell && onPressCell(date.toDate())}
-                    />
-                  </>
+                  /* In this case, we render `TouchableGradually` on the date cell to prevent event cell's touch events from being called. */
+                  <TouchableGradually
+                    style={{
+                      height: calendarCellHeight,
+                      width: Math.floor(calendarWidth / 7),
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                    }}
+                    onLongPress={() => date && onLongPressCell && onLongPressCell(date.toDate())}
+                    onPress={() => date && onPressCell && onPressCell(date.toDate())}
+                    {...calendarCellAccessibilityProps}
+                  />
                 )}
               </TouchableOpacity>
             ))}
@@ -358,7 +411,18 @@ function _CalendarBodyForMonthView<T extends ICalendarEventBase>({
 
 export const CalendarBodyForMonthView = _CalendarBodyForMonthView
 
-function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: () => void }) {
+/**
+ * A utility component which prevents event cells from being pressed in Month View.
+ */
+function TouchableGradually({
+  onLongPress,
+  onPress,
+  style,
+}: {
+  style?: ViewStyle
+  onLongPress: () => void
+  onPress: () => void
+}) {
   const backgroundColor = React.useRef(new Animated.Value(0)).current
 
   const handlePressIn = () => {
@@ -379,6 +443,7 @@ function TouchableGradually({ onPress, style }: { style?: ViewStyle; onPress: ()
 
   return (
     <TouchableHighlight
+      onLongPress={onLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={onPress}

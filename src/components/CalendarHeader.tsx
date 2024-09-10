@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import * as React from 'react'
-import { Platform, Text, TouchableOpacity, View, ViewStyle } from 'react-native'
+import { AccessibilityProps, Platform, Text, TouchableOpacity, View, ViewStyle } from 'react-native'
 
 import { eventCellCss, u } from '../commonStyles'
 import { ICalendarEventBase } from '../interfaces'
@@ -12,6 +12,8 @@ export interface CalendarHeaderProps<T extends ICalendarEventBase> {
   dateRange: dayjs.Dayjs[]
   cellHeight: number
   style: ViewStyle
+  allDayEventCellStyle: ViewStyle | ((event: T) => ViewStyle)
+  allDayEventCellTextColor: string
   allDayEvents: T[]
   onPressDateHeader?: (date: Date) => void
   onPressEvent?: (event: T) => void
@@ -22,12 +24,19 @@ export interface CalendarHeaderProps<T extends ICalendarEventBase> {
   weekDayHeaderHighlightColor?: string
   showAllDayEventCell?: boolean
   hideHours?: Boolean
+  showWeekNumber?: boolean
+  weekNumberPrefix?: string
+  allDayEventCellAccessibilityProps?: AccessibilityProps
+  headerContainerAccessibilityProps?: AccessibilityProps
+  headerCellAccessibilityProps?: AccessibilityProps
 }
 
 function _CalendarHeader<T extends ICalendarEventBase>({
   dateRange,
   cellHeight,
   style,
+  allDayEventCellStyle,
+  allDayEventCellTextColor,
   allDayEvents,
   onPressDateHeader,
   onPressEvent,
@@ -38,6 +47,11 @@ function _CalendarHeader<T extends ICalendarEventBase>({
   weekDayHeaderHighlightColor = '',
   showAllDayEventCell = true,
   hideHours = false,
+  showWeekNumber = false,
+  weekNumberPrefix = '',
+  allDayEventCellAccessibilityProps = {},
+  headerContainerAccessibilityProps = {},
+  headerCellAccessibilityProps = {},
 }: CalendarHeaderProps<T>) {
   const _onPressHeader = React.useCallback(
     (date: Date) => {
@@ -66,8 +80,48 @@ function _CalendarHeader<T extends ICalendarEventBase>({
         theme.isRTL ? u['flex-row-reverse'] : u['flex-row'],
         style,
       ]}
+      {...headerContainerAccessibilityProps}
     >
-      {!hideHours && <View style={[u['z-10'], u['w-50'], borderColor]} />}
+      {(!hideHours || showWeekNumber) && (
+        <View style={[u['z-10'], u['w-50'], u['pt-2'], borderColor]}>
+          {showWeekNumber ? (
+            <View
+              style={[
+                { height: cellHeight },
+                objHasContent(headerContentStyle) ? headerContentStyle : u['justify-between'],
+              ]}
+              {...headerCellAccessibilityProps}
+            >
+              <Text
+                style={[
+                  theme.typography.xs,
+                  u['text-center'],
+                  {
+                    color: theme.palette.gray['500'],
+                  },
+                ]}
+              >
+                {weekNumberPrefix}
+              </Text>
+              <View style={objHasContent(dayHeaderStyle) ? dayHeaderStyle : [u['mb-6']]}>
+                <Text
+                  style={[
+                    {
+                      color: theme.palette.gray['800'],
+                    },
+                    theme.typography.xl,
+                    u['text-center'],
+                  ]}
+                >
+                  {dateRange.length > 0
+                    ? dateRange[0].startOf('week').add(4, 'days').isoWeek()
+                    : ''}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      )}
       {dateRange.map((date) => {
         const shouldHighlight = activeDate ? date.isSame(activeDate, 'date') : isToday(date)
 
@@ -77,6 +131,7 @@ function _CalendarHeader<T extends ICalendarEventBase>({
             onPress={() => _onPressHeader(date.toDate())}
             disabled={onPressDateHeader === undefined}
             key={date.toString()}
+            {...headerCellAccessibilityProps}
           >
             <View
               style={[
@@ -151,16 +206,23 @@ function _CalendarHeader<T extends ICalendarEventBase>({
                   if (!dayjs(date).isBetween(event.start, event.end, 'day', '[]')) {
                     return null
                   }
+
+                  const getEventStyle =
+                    typeof allDayEventCellStyle === 'function'
+                      ? allDayEventCellStyle
+                      : () => allDayEventCellStyle
+
                   return (
                     <TouchableOpacity
-                      style={[eventCellCss.style, primaryBg, u['mt-2']]}
+                      style={[eventCellCss.style, primaryBg, u['mt-2'], getEventStyle(event)]}
                       key={index}
                       onPress={() => _onPressEvent(event)}
+                      {...allDayEventCellAccessibilityProps}
                     >
                       <Text
                         style={{
                           fontSize: theme.typography.sm.fontSize,
-                          color: theme.palette.primary.contrastText,
+                          color: allDayEventCellTextColor || theme.palette.primary.contrastText,
                         }}
                       >
                         {event.title}

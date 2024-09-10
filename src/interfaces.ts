@@ -10,6 +10,15 @@ export interface ICalendarEventBase {
   title: string
   children?: ReactElement | null
   hideHours?: boolean
+  disabled?: boolean
+  /**
+   * overlapping position of event starting from 0 (optional)
+   */
+  overlapPosition?: number
+  /**
+   * number of events overlapping with this event (optional)
+   */
+  overlapCount?: number
 }
 
 export type CalendarTouchableOpacityProps = {
@@ -20,12 +29,16 @@ export type CalendarTouchableOpacityProps = {
   disabled: boolean
 }
 
-export type Mode = '3days' | 'week' | 'day' | 'custom' | 'month'
+export type Mode = '3days' | 'week' | 'day' | 'custom' | 'month' | 'schedule'
 
 export type EventCellStyle<T extends ICalendarEventBase> =
   | ViewStyle
   | ViewStyle[]
   | ((event: T) => ViewStyle | ViewStyle[])
+
+export type AllDayEventCellStyle<T extends ICalendarEventBase> =
+  | ViewStyle
+  | ((event: T) => ViewStyle)
 
 export type CalendarCellStyle = ViewStyle | ((date?: Date, hourRowIndex?: number) => ViewStyle)
 
@@ -48,3 +61,5 @@ export type HeaderRenderer<T extends ICalendarEventBase> = React.ComponentType<
   CalendarHeaderProps<T> & { mode: Mode }
 >
 export type MonthHeaderRenderer = React.ComponentType<CalendarHeaderForMonthViewProps>
+
+export type HourRenderer = React.ComponentType<{ ampm: boolean; hour: number }>
